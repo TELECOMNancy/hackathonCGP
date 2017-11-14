@@ -23,6 +23,7 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.LongPoint;
+import org.apache.lucene.document.StoredField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.CorruptIndexException;
@@ -123,16 +124,44 @@ public class LuceneIndex {
 	  
 	  /** Indexes a single document */
 	    static void indexDoc(IndexWriter writer, Path file, long lastModified) throws IOException {
+	    	System.out.println("file = "+ file);
 	      try (InputStream stream = Files.newInputStream(file)) {
+
+	    	  System.out.println("stream = " + stream);
+	      	InputStreamReader ipsr= new InputStreamReader(stream, StandardCharsets.UTF_8);
+	      	System.out.println("ipsr = "+ ipsr.getEncoding());
+	      	BufferedReader br = new BufferedReader(ipsr);
 	        // make a new, empty document
 	        Document doc = new Document();
-
+	        String line;
 	        IndexableField pathField = new StringField("path", file.toString(), Store.YES);
-	        doc.add(pathField);
-	  
+	        doc.add(pathField);	  
 	        doc.add(new LongPoint("modified", lastModified));
 
-	        doc.add(new TextField("contents", new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))));
+	        System.out.println("buff = " + br.readLine());
+	        while((line = br.readLine()) != null)
+	    	 {
+
+	        	System.out.print("line = "+ line +"\n");
+		    		 String[] tmp = line.split(";");
+		    		 System.out.println("tmp = "+ tmp[4]);
+					  String MNCP_NAME =tmp[4];
+					  String PRSN_INTERNALID = tmp[0];
+					  String PRSN_SEX = tmp[2];
+					  String VILLE_MEDECIN = tmp[6];
+					  String PAYS_MEDECIN = tmp[7];
+					  String PRSN_BIRTHDATE = tmp[1];
+					  doc.add(new TextField("MNCP_NAME",MNCP_NAME, Store.YES));
+					  doc.add(new StoredField("PRSN_INTERNALID",PRSN_INTERNALID));
+					  doc.add(new StoredField("PRSN_SEX",PRSN_SEX));
+					  doc.add(new StoredField("VILLE_MEDECIN", VILLE_MEDECIN));
+					  doc.add(new StoredField("PAYS_MEDECIN",PAYS_MEDECIN));
+					  doc.add(new StoredField("PRSN_BIRTHDATE",PRSN_BIRTHDATE));
+	    			  writer.addDocument(doc);
+
+	    		  	  doc = new Document();
+		    	 
+	    	 }
 	        
 	        if (writer.getConfig().getOpenMode() == OpenMode.CREATE) {
 	          // New index, so we just add the document (no old document can be there):
