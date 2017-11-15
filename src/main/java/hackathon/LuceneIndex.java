@@ -38,9 +38,9 @@ public class LuceneIndex {
                 + " [-index INDEX_PATH] [-docs DOCS_PATH] [-update]\n\n"
                 + "This indexes the documents in DOCS_PATH, creating a Lucene index"
                 + "in INDEX_PATH that can be searched with SearchFiles";
-        String indexPath = "index";
-        String docsPath = null;
-        boolean create = true;
+        //String indexPath = "index";
+        //String docsPath = null;
+        /*boolean create = true;
         for (int i = 0; i < args.length; i++) {
             if ("-index".equals(args[i])) {
                 indexPath = args[i + 1];
@@ -51,8 +51,11 @@ public class LuceneIndex {
             } else if ("-update".equals(args[i])) {
                 create = false;
             }
-        }
-
+        }*/
+        String indexPathMNCP = args[0];
+        String indexPathMED = args[1];
+        String docsPath = args[2];
+         
         if (docsPath == null) {
             System.err.println("Usage: " + usage);
             System.exit(1);
@@ -66,25 +69,37 @@ public class LuceneIndex {
 
         Date start = new Date();
         try {
-            System.out.println("Indexing to directory '" + indexPath + "'...");
+            System.out.println("Indexing to directory '" + indexPathMNCP + "'...");
 
-            Directory dir = FSDirectory.open(Paths.get(indexPath));
-            Analyzer analyzer = new StandardAnalyzer();
-            IndexWriterConfig iwc = new IndexWriterConfig(analyzer);
+            Directory dirMNCP = FSDirectory.open(Paths.get(indexPathMNCP));
+            Analyzer analyzerMNCP = new StandardAnalyzer();
+            IndexWriterConfig iwcMNCP = new IndexWriterConfig(analyzerMNCP);
+            iwcMNCP.setOpenMode(OpenMode.CREATE_OR_APPEND);
+            
+            
+            System.out.println("Indexing to directory '" + indexPathMED + "'...");
 
-            if (create) {
+            Directory dirMED = FSDirectory.open(Paths.get(indexPathMED));
+            Analyzer analyzerMED = new StandardAnalyzer();
+            IndexWriterConfig iwcMED = new IndexWriterConfig(analyzerMED);
+            iwcMED.setOpenMode(OpenMode.CREATE_OR_APPEND);
+            
+            /*if (create) {
                 // Create a new index in the directory, removing any
                 // previously indexed documents:
                 iwc.setOpenMode(OpenMode.CREATE);
             } else {
                 // Add new documents to an existing index:
                 iwc.setOpenMode(OpenMode.CREATE_OR_APPEND);
-            }
+            }*/
 
-            IndexWriter writer = new IndexWriter(dir, iwc);
-            indexDocsByMNCP(writer, docDir);
-
-            writer.close();
+            IndexWriter writerMNCP = new IndexWriter(dirMNCP, iwcMNCP);
+            IndexWriter writerMED= new IndexWriter(dirMED, iwcMED);
+            indexDocsByMNCP(writerMNCP, docDir);
+            indexDocsByMED(writerMED, docDir);
+            
+            writerMNCP.close();
+            writerMED.close();
 
             Date end = new Date();
             System.out.println(end.getTime() - start.getTime() + " total milliseconds");
@@ -133,27 +148,42 @@ public class LuceneIndex {
 
             System.out.println("buff = " + br.readLine());
             while ((line = br.readLine()) != null) {
+            	String[] tmp = line.split(";");
+            	if (tmp[1].length() == 10){
+            		//System.out.print("line = " + line + "\n");
+                    
+                    //System.out.println("tmp = " + tmp[4]);
+                    String MNCP_NAME = tmp[4];
+                    String PRSN_INTERNALID = tmp[0];
+                    String PRSN_SEX = tmp[2];
+                    String VILLE_MEDECIN = tmp[6];
+                    String PAYS_MEDECIN = tmp[7];
+                    String PRSN_BIRTHDATE = tmp[1];
+                    String DATE_DOSSIER = tmp[5];
+                    String PRSN_AGE = String.valueOf(Integer.parseInt(tmp[1].substring(0, 4))-Integer.parseInt(tmp[5].substring(0, 4)));
+                    
+                    //System.out.println("tmp = " + tmp[5]);
+                    doc.add(new TextField("MNCP_NAME", MNCP_NAME, Store.YES));
+                    doc.add(new StoredField("PRSN_INTERNALID", PRSN_INTERNALID));
+                    doc.add(new TextField("PRSN_SEX", PRSN_SEX, Store.YES));
+                    doc.add(new StoredField("VILLE_MEDECIN", VILLE_MEDECIN));
+                    doc.add(new StoredField("PAYS_MEDECIN", PAYS_MEDECIN));
+                    doc.add(new StoredField("PRSN_BIRTHDATE", PRSN_BIRTHDATE));
+                    doc.add(new TextField("PRSN_AGE",PRSN_AGE, Store.YES));
+                    doc.add(new StoredField("DATE_DOSSIER", DATE_DOSSIER));
+                    writer.addDocument(doc);
 
-                System.out.print("line = " + line + "\n");
-                String[] tmp = line.split(";");
-                System.out.println("tmp = " + tmp[4]);
-                String MNCP_NAME = tmp[4];
-                String PRSN_INTERNALID = tmp[0];
-                String PRSN_SEX = tmp[2];
-                String VILLE_MEDECIN = tmp[6];
-                String PAYS_MEDECIN = tmp[7];
-                String PRSN_BIRTHDATE = tmp[1];
-                doc.add(new TextField("MNCP_NAME", MNCP_NAME, Store.YES));
-                doc.add(new StoredField("PRSN_INTERNALID", PRSN_INTERNALID));
-                doc.add(new StoredField("PRSN_SEX", PRSN_SEX));
-                doc.add(new StoredField("VILLE_MEDECIN", VILLE_MEDECIN));
-                doc.add(new StoredField("PAYS_MEDECIN", PAYS_MEDECIN));
-                doc.add(new StoredField("PRSN_BIRTHDATE", PRSN_BIRTHDATE));
-                writer.addDocument(doc);
+                    doc = new Document();
+            	}
 
-                doc = new Document();
+                
 
             }
+            
+            /*for (Store c : Store.values()){
+            	System.out.println(c);
+            }*/
+                
 
             writerUpdateUpdate(writer, file, doc);
         }
@@ -216,25 +246,33 @@ public class LuceneIndex {
 
             System.out.println("buff = " + br.readLine());
             while ((line = br.readLine()) != null) {
+            	String[] tmp = line.split(";");
+            	if (tmp[1].length() == 10){
+            		//System.out.print("line = " + line + "\n");
+                    
+                    //System.out.println("tmp = " + tmp[4]);
+                    String MNCP_NAME = tmp[4];
+                    String PRSN_INTERNALID = tmp[0];
+                    String PRSN_SEX = tmp[2];
+                    String VILLE_MEDECIN = tmp[6];
+                    String PAYS_MEDECIN = tmp[7];
+                    String PRSN_BIRTHDATE = tmp[1];
+                    String DATE_DOSSIER = tmp[5];
+                    String PRSN_AGE = String.valueOf(Integer.parseInt(tmp[1].substring(0, 4))-Integer.parseInt(tmp[5].substring(0, 4)));
+                    
+                    doc.add(new TextField("VILLE_MEDECIN", VILLE_MEDECIN, Store.YES));
+                    doc.add(new StoredField("MNCP_NAME", MNCP_NAME));
+                    doc.add(new StoredField("PRSN_INTERNALID", PRSN_INTERNALID));
+                    doc.add(new TextField("PRSN_SEX", PRSN_SEX,Store.YES));
+                    doc.add(new StoredField("PAYS_MEDECIN", PAYS_MEDECIN));
+                    doc.add(new StoredField("PRSN_BIRTHDATE", PRSN_BIRTHDATE));
+                    doc.add(new StoredField("DATE_DOSSIER", DATE_DOSSIER));
+                    doc.add(new TextField("PRSN_AGE",PRSN_AGE, Store.YES));
+                    writer.addDocument(doc);
 
-                System.out.print("line = " + line + "\n");
-                String[] tmp = line.split(";");
-                System.out.println("tmp = " + tmp[4]);
-                String MNCP_NAME = tmp[4];
-                String PRSN_INTERNALID = tmp[0];
-                String PRSN_SEX = tmp[2];
-                String VILLE_MEDECIN = tmp[6];
-                String PAYS_MEDECIN = tmp[7];
-                String PRSN_BIRTHDATE = tmp[1];
-                doc.add(new StoredField("MNCP_NAME", MNCP_NAME));
-                doc.add(new StoredField("PRSN_INTERNALID", PRSN_INTERNALID));
-                doc.add(new StoredField("PRSN_SEX", PRSN_SEX));
-                doc.add(new TextField("VILLE_MEDECIN", VILLE_MEDECIN, Store.YES));
-                doc.add(new StoredField("PAYS_MEDECIN", PAYS_MEDECIN));
-                doc.add(new StoredField("PRSN_BIRTHDATE", PRSN_BIRTHDATE));
-                writer.addDocument(doc);
-
-                doc = new Document();
+                    doc = new Document();
+            	}
+                
 
             }
 
