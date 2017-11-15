@@ -8,7 +8,9 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.TreeSet;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -29,7 +31,6 @@ import org.apache.lucene.store.FSDirectory;
 public class LuceneIndex {
     private LuceneIndex() {
     }
-
     /**
      * Index all text files under a directory.
      */
@@ -134,7 +135,7 @@ public class LuceneIndex {
     static void indexDocByMNCP(IndexWriter writer, Path file, long lastModified) throws IOException {
         System.out.println("file = " + file);
         try (InputStream stream = Files.newInputStream(file)) {
-
+        	TreeSet<String> tSet = new TreeSet<String>();
             System.out.println("stream = " + stream);
             InputStreamReader ipsr = new InputStreamReader(stream, StandardCharsets.UTF_8);
             System.out.println("ipsr = " + ipsr.getEncoding());
@@ -154,6 +155,7 @@ public class LuceneIndex {
                     
                     //System.out.println("tmp = " + tmp[4]);
                     String MNCP_NAME = tmp[4];
+                    tSet.add(MNCP_NAME);
                     String PRSN_INTERNALID = tmp[0];
                     String PRSN_SEX = tmp[2];
                     String VILLE_MEDECIN = tmp[6];
@@ -184,7 +186,6 @@ public class LuceneIndex {
             	System.out.println(c);
             }*/
                 
-
             writerUpdateUpdate(writer, file, doc);
         }
     }

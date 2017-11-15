@@ -17,11 +17,18 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.MultiFields;
+import org.apache.lucene.index.Terms;
+import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TopScoreDocCollector;
+import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.QueryBuilder;
+import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.QueryParserBase;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.ScoreDoc;
@@ -31,38 +38,67 @@ import org.apache.lucene.store.FSDirectory;
 
 public class SearchIndex {
 
+	
+	public static int[] nbPatientsparAge(String path, String cityparam) throws IOException{
+		int[] tabAges = new int[10];
+		for(int i=0; i<tabAges.length-1; i++){
+			tabAges[i] = getNbPatients(path,cityparam,"1",String.valueOf(i*10),String.valueOf(i*10+9))
+					+getNbPatients(path,cityparam,"2",String.valueOf(i*10),String.valueOf(i*10+9));
+		}
+		tabAges[9]=getNbPatients(path,cityparam,"1",String.valueOf(90),String.valueOf(110))
+				+getNbPatients(path,cityparam,"2",String.valueOf(90),String.valueOf(110));
+		return tabAges;
+	}
+	
+	public static int getNbPatients(String path, String cityparam, String sexparam, String agemin, String agemax) throws IOException{
+		return SearchIndexbis( path,  cityparam,  sexparam,  agemin,  agemax ).size();
+	}
 
-    public static ArrayList<ArrayList<String>> SearchIndex(String path, String search) throws IOException {
-        System.out.println("Path = " + path);
+    public static ArrayList<ArrayList<String>> SearchIndexbis(String path, String cityparam, String sexparam, String agemin, String agemax ) throws IOException {
+    	ArrayList<ArrayList<String>> res = new ArrayList<ArrayList<String>>();
+    	for(int i=Integer.parseInt(agemin); i<Integer.parseInt(agemax); i++)
+    		res.addAll(SearchIndex(path,cityparam,sexparam,String.valueOf(i)));
+    	//System.out.println(res);
+    	return res;
+    }
+    public static ArrayList<ArrayList<String>> SearchIndex(String path, String cityparam, String sexparam, String ageparam ) throws IOException {
+        //System.out.println("Path = " + path);
         StandardAnalyzer analyzer = new StandardAnalyzer();
         Directory index = FSDirectory.open(Paths.get(path));
-        System.out.println("length = " + index.listAll().toString().length());
+        //System.out.println("length = " + index.listAll().toString().length());
         ArrayList<ArrayList<String>> res2 = new ArrayList<ArrayList<String>>();
         
         String id = "";
         String sex = "";
         String date_birth = null;
-        String ville_doctor = "";
+        String city_doctor = "";
         String pays_doctor = "";
         String dossier = null;
         //q est la recherche
         Query q = null;
         try {
-            q = new QueryParser("MNCP_NAME", analyzer).parse(search);
+        	String[] listField = {"MNCP_NAME", "PRSN_AGE", "PRSN_SEX"};
+        	String[] listPath = {cityparam,ageparam,sexparam};
+        	BooleanClause.Occur[] flags = {BooleanClause.Occur.MUST,BooleanClause.Occur.MUST, BooleanClause.Occur.MUST};
+            q = new MultiFieldQueryParser(listField, analyzer).parse(listPath,listField,flags, analyzer);
+        
+           
 
         } catch (org.apache.lucene.queryparser.classic.ParseException e) {
             e.printStackTrace();
         }
         int hitsPerPage = 1000000;
         IndexReader reader = DirectoryReader.open(index);
-        //System.out.println("reader =" + reader.numDocs());
+		
+//System.out.println("reader =" + reader.numDocs());
         IndexSearcher searcher = new IndexSearcher(reader);
         //System.out.println("searcher =" + searcher.count(q));
         TopScoreDocCollector collector = TopScoreDocCollector.create(hitsPerPage);
+        //System.out.println("collector = " + collector.toString());
         searcher.search(q, collector);
         ScoreDoc[] hits = collector.topDocs().scoreDocs;
         // =============== Display  =============================
-        System.out.println("Found " + hits.length + " hits.");
+        //System.out.println("Found " + hits.length + " hits.");
         for (int i = 0; i < hits.length; ++i) {
         	ArrayList<String> res = new ArrayList<String>();
             int docId = hits[i].doc;
@@ -71,7 +107,7 @@ public class SearchIndex {
             id = d.get("PRSN_INTERNALID");
             sex = d.get("PRSN_SEX");
             date_birth = d.get("PRSN_BIRTHDATE");
-            ville_doctor = d.get("VILLE_MEDECIN");
+            city_doctor = d.get("VILLE_MEDECIN");
             pays_doctor = d.get("PAYS_MEDECIN");
             dossier = d.get("DATE_DOSSIER");
             /*
@@ -86,7 +122,7 @@ public class SearchIndex {
             res.add(sex);
             res.add(date_birth);
             res.add(dossier);
-            res.add(ville_doctor);
+            res.add(city_doctor);
             res.add(pays_doctor);
             
             //System.out.println("res = " + res);
@@ -96,10 +132,10 @@ public class SearchIndex {
         reader.close();
         
        
-        System.out.println("res2 = " + res2.size());
+        
         return res2;
     }
-    
+    /*
     public static int[] NbAgeVille (String path, String ville) throws IOException, ParseException{
     	ArrayList<ArrayList<String>> liste = new ArrayList<ArrayList<String>>();
     	liste = SearchIndex(path, ville);
@@ -171,8 +207,8 @@ public class SearchIndex {
     	System.out.println("cpt = "+ cpt);
     	
     	return age;
-    }
-    
+    }*/
+    /*
     public static int NbConsultationVille (String path, String ville, String sex, String ageMin, String ageMax) throws IOException{
     	int NbConsultationVille = 0;
     	ArrayList<ArrayList<String>> liste = new ArrayList<ArrayList<String>>();
@@ -192,7 +228,7 @@ public class SearchIndex {
     	}
     	
     	return NbConsultationVille;
-    }
+    }*/
     
     public static HashMap NbConsultation (String path, String sex, int ageMin, int ageMax){
     	HashMap NbConsultation = new HashMap();
@@ -208,7 +244,15 @@ public class SearchIndex {
     }*/
 
     public static void main(String[] args) throws Exception {
-    	NbAgeVille(args[0], args[1]);
+    	//SearchIndex(args[0], args[1], "1","20");
+    	int[] tab = nbPatientsparAge(args[0], args[1]);
+    	int tt=0;
+    	for(int i : tab){
+    		tt+=i;
+    		System.out.println(i);
+    	}
+    	System.out.println(tt);
+    	//System.out.println(getNbPatients(args[0],args[1], "1", "20", "25"));
     }
 
 }
