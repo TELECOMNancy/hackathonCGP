@@ -2,6 +2,10 @@
 package hackathon;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -28,34 +32,28 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
+import java.io.FileReader;
+
 public class LuceneIndex {
-    private LuceneIndex() {
-    }
+    
+	//private ArrayList<String> listCities = new ArrayList<String>();
     /**
      * Index all text files under a directory.
+     * @throws IOException 
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         String usage = "java org.apache.lucene.demo.IndexFiles"
                 + " [-index INDEX_PATH] [-docs DOCS_PATH] [-update]\n\n"
                 + "This indexes the documents in DOCS_PATH, creating a Lucene index"
                 + "in INDEX_PATH that can be searched with SearchFiles";
-        //String indexPath = "index";
-        //String docsPath = null;
-        /*boolean create = true;
-        for (int i = 0; i < args.length; i++) {
-            if ("-index".equals(args[i])) {
-                indexPath = args[i + 1];
-                i++;
-            } else if ("-docs".equals(args[i])) {
-                docsPath = args[i + 1];
-                i++;
-            } else if ("-update".equals(args[i])) {
-                create = false;
-            }
-        }*/
+        
+        
         String indexPathMNCP = args[0];
         String indexPathMED = args[1];
         String docsPath = args[2];
+        String pathFile = args[3];
+        
+        listCities(docsPath, pathFile);
          
         if (docsPath == null) {
             System.err.println("Usage: " + usage);
@@ -84,20 +82,11 @@ public class LuceneIndex {
             Analyzer analyzerMED = new StandardAnalyzer();
             IndexWriterConfig iwcMED = new IndexWriterConfig(analyzerMED);
             iwcMED.setOpenMode(OpenMode.CREATE_OR_APPEND);
-            
-            /*if (create) {
-                // Create a new index in the directory, removing any
-                // previously indexed documents:
-                iwc.setOpenMode(OpenMode.CREATE);
-            } else {
-                // Add new documents to an existing index:
-                iwc.setOpenMode(OpenMode.CREATE_OR_APPEND);
-            }*/
 
             IndexWriter writerMNCP = new IndexWriter(dirMNCP, iwcMNCP);
             IndexWriter writerMED= new IndexWriter(dirMED, iwcMED);
-            indexDocsByMNCP(writerMNCP, docDir);
-            indexDocsByMED(writerMED, docDir);
+            //indexDocsByMNCP(writerMNCP, docDir);
+            //indexDocsByMED(writerMED, docDir);
             
             writerMNCP.close();
             writerMED.close();
@@ -109,6 +98,29 @@ public class LuceneIndex {
             System.out.println(" caught a " + e.getClass() +
                     "\n with message: " + e.getMessage());
         }
+    }
+    
+    static void listCities(String docsPath, String pathFile) throws IOException{
+    	BufferedReader fileCSV = new BufferedReader(new FileReader(docsPath));
+		String line;
+		String[] sline;
+		ArrayList<String> cities = new ArrayList<String>();
+		BufferedWriter writer = new BufferedWriter(new FileWriter(new File(pathFile)));
+		// normalement si le fichier n'existe pas, il est crée à la racine du projet
+		int cpt =0;
+		fileCSV.readLine();
+		while((line = fileCSV.readLine())!= null){
+			sline = line.split(";");
+			if(!cities.contains(sline[4])){
+				cities.add(sline[4]);
+				writer.write(sline[4] + "\n");
+				cpt+=1;
+				
+			}				
+		}
+		System.out.println("compteur ="+ cpt);
+		writer.close();
+		fileCSV.close();
     }
 
     static void indexDocsByMNCP(final IndexWriter writer, Path path) throws IOException {
@@ -178,13 +190,7 @@ public class LuceneIndex {
                     doc = new Document();
             	}
 
-                
-
             }
-            
-            /*for (Store c : Store.values()){
-            	System.out.println(c);
-            }*/
                 
             writerUpdateUpdate(writer, file, doc);
         }
@@ -274,7 +280,6 @@ public class LuceneIndex {
                     doc = new Document();
             	}
                 
-
             }
 
             writerUpdate(writer, file, doc);

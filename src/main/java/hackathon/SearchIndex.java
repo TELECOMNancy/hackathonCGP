@@ -36,7 +36,9 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
-public class SearchIndex {
+import java.applet.Applet;
+
+public class SearchIndex extends Applet {
 
 	
 	public static int[] nbPatientsparAge(String path, String cityparam) throws IOException{
@@ -61,6 +63,7 @@ public class SearchIndex {
     	//System.out.println(res);
     	return res;
     }
+    
     public static ArrayList<ArrayList<String>> SearchIndex(String path, String cityparam, String sexparam, String ageparam ) throws IOException {
         //System.out.println("Path = " + path);
         StandardAnalyzer analyzer = new StandardAnalyzer();
@@ -74,6 +77,7 @@ public class SearchIndex {
         String city_doctor = "";
         String pays_doctor = "";
         String dossier = null;
+        String ville="";
         //q est la recherche
         Query q = null;
         try {
@@ -90,7 +94,6 @@ public class SearchIndex {
         int hitsPerPage = 1000000;
         IndexReader reader = DirectoryReader.open(index);
 		
-//System.out.println("reader =" + reader.numDocs());
         IndexSearcher searcher = new IndexSearcher(reader);
         //System.out.println("searcher =" + searcher.count(q));
         TopScoreDocCollector collector = TopScoreDocCollector.create(hitsPerPage);
@@ -110,6 +113,7 @@ public class SearchIndex {
             city_doctor = d.get("VILLE_MEDECIN");
             pays_doctor = d.get("PAYS_MEDECIN");
             dossier = d.get("DATE_DOSSIER");
+            
             /*
             System.out.println("id = " + id);
             System.out.println("sex = " + sex);
@@ -123,7 +127,7 @@ public class SearchIndex {
             res.add(date_birth);
             res.add(dossier);
             res.add(city_doctor);
-            res.add(pays_doctor);
+            
             
             //System.out.println("res = " + res);
             res2.add(i, res);
