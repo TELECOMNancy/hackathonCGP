@@ -113,7 +113,10 @@ public class SearchIndex {
         for(Map.Entry<ArrayList<String>, Integer> entry : map.entrySet()){
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("age", entry.getKey().get(1));
-            jsonObject.put("sex", entry.getKey().get(0));
+            if(entry.getKey().get(0).equals("1"))
+                jsonObject.put("sex", "M");
+            if(entry.getKey().get(0).equals("2"))
+                jsonObject.put("sex", "F");
             jsonObject.put("nb", entry.getValue());
             mapJSON.accumulate("medicalCity", jsonObject);
         }
@@ -248,8 +251,8 @@ public class SearchIndex {
         //generateDonutJSON(args[0]);
         //generateDonutJSON(args[0], args[1]);
     	//System.out.println(getNbPatients(args[0],args[1], "1", "20", "25"));
-    	//generateMapJSON(args[0]);
-    	generateGraphicJSON(args[0]);
+    	generateMapJSON(args[0]);
+    	//generateGraphicJSON(args[0]);
     }
 
 }
