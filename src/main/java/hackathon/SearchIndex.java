@@ -198,7 +198,7 @@ public class SearchIndex {
 
 
     public static void generateDonutJSON(String path)throws IOException{
-        FileReader f = new FileReader(path+"//villes.txt");
+        FileReader f = new FileReader(path+"//ville_luxembourg.txt");
         BufferedReader bf = new BufferedReader(f);
         JSONObject jsonObject = new JSONObject();
         String city;
