@@ -85,8 +85,8 @@ public class LuceneIndex {
 
             IndexWriter writerMNCP = new IndexWriter(dirMNCP, iwcMNCP);
             IndexWriter writerMED= new IndexWriter(dirMED, iwcMED);
-            //indexDocsByMNCP(writerMNCP, docDir);
-            //indexDocsByMED(writerMED, docDir);
+            indexDocsByMNCP(writerMNCP, docDir);
+            indexDocsByMED(writerMED, docDir);
             
             writerMNCP.close();
             writerMED.close();

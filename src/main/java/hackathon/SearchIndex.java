@@ -1,51 +1,56 @@
 package hackathon;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.sql.Timestamp;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.MultiFields;
-import org.apache.lucene.index.Terms;
-import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TopScoreDocCollector;
-import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.QueryBuilder;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
-import org.apache.lucene.queryparser.classic.QueryParserBase;
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.json.*;
 
-import javax.xml.transform.sax.SAXSource;
-
 public class SearchIndex {
 
 
+    public static void generateDonutJSON(String path)throws IOException{
+        FileReader f = new FileReader(path+"//villes.txt");
+        BufferedReader bf = new BufferedReader(f);
+        JSONObject jsonObject = new JSONObject();
+        String city;
+        while((city=bf.readLine())!=null){
+            jsonObject.accumulate("patientCity", generateDonutJSON(path+"//MNCP",city));
+        }
+        File jf = new File("donutJSON.json");
+        if(jf.exists())
+            jf.delete();
 
-    public static void generateDonutJSON(String path, String cityparam) throws IOException{
+        FileWriter jsonOutput = new FileWriter(jf);
+
+        jsonOutput.write(jsonObject.toString(4));
+
+        jsonOutput.close();
+    }
+
+    public static JSONObject generateDonutJSON(String path, String cityparam) throws IOException{
         ArrayList<ArrayList<String>> res = SearchIndex(path, cityparam);
         HashMap<String, Integer> map = new HashMap<>();
+        int nbConsultations = 0,
+            nbConsultationsIgn =0;
+        float pctEntry = 0;
         for(ArrayList<String> line : res){
+            nbConsultations++;
             Integer count = map.get(line.get(4));
             if (count == null) {
                 map.put(line.get(4), 1);
@@ -54,24 +59,36 @@ public class SearchIndex {
                 map.put(line.get(4), count + 1);
             }
         }
+        //System.out.println(nbConsultations);
         JSONObject mncp_medJSON = new JSONObject();
         mncp_medJSON.put("patientCityName",cityparam);
         for(Map.Entry<String, Integer> entry : map.entrySet()){
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("medicalCityName", entry.getKey());
-            jsonObject.put("nb", entry.getValue());
-            mncp_medJSON.accumulate("medicalCity", jsonObject);
+            pctEntry=(float)entry.getValue()/(float)nbConsultations;
+            if(pctEntry>0.01f) {
+                //System.out.println(pctEntry);
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("medicalCityName", entry.getKey());
+                jsonObject.put("nb", entry.getValue());
+                mncp_medJSON.accumulate("medicalCity", jsonObject);
+            }
+            else nbConsultationsIgn+=entry.getValue();
         }
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("medicalCityName", "Autres");
+        jsonObject.put("nb", nbConsultationsIgn);
+        mncp_medJSON.accumulate("medicalCity", jsonObject);
 
-        File f = new File("donutJSON_"+cityparam+".json");
-        if(f.exists())
-            f.delete();
 
-        FileWriter jsonOutput = new FileWriter(f);
-
-        jsonOutput.write(mncp_medJSON.toString(4));
-
-        jsonOutput.close();
+        return mncp_medJSON;
+//        File f = new File("donutJSON_"+cityparam+".json");
+//        if(f.exists())
+//            f.delete();
+//
+//        FileWriter jsonOutput = new FileWriter(f);
+//
+//        jsonOutput.write(mncp_medJSON.toString(4));
+//
+//        jsonOutput.close();
 //        System.out.println(mncp_medJSON.toString(2));
     }
 
@@ -86,12 +103,13 @@ public class SearchIndex {
 				+getNbPatients(path,cityparam,"2",String.valueOf(90),String.valueOf(110));
 		return tabAges;
 	}
-	
+
+
 	public static int getNbPatients(String path, String cityparam, String sexparam, String agemin, String agemax) throws IOException{
-		return SearchIndexbis( path,  cityparam,  sexparam,  agemin,  agemax ).size();
+		return SearchIndex( path,  cityparam,  sexparam,  agemin,  agemax ).size();
 	}
 
-    public static ArrayList<ArrayList<String>> SearchIndexbis(String path, String cityparam, String sexparam, String agemin, String agemax ) throws IOException {
+    public static ArrayList<ArrayList<String>> SearchIndex(String path, String cityparam, String sexparam, String agemin, String agemax ) throws IOException {
     	ArrayList<ArrayList<String>> res = new ArrayList<ArrayList<String>>();
     	for(int i=Integer.parseInt(agemin); i<Integer.parseInt(agemax); i++)
     		res.addAll(SearchIndex(path,cityparam,sexparam,String.valueOf(i)));
@@ -117,9 +135,8 @@ public class SearchIndex {
             String[] listField = {"MNCP_NAME"};
             String[] listPath = {cityparam};
             BooleanClause.Occur[] flags = {BooleanClause.Occur.MUST};
-            q = new MultiFieldQueryParser(listField, analyzer).parse(listPath,listField,flags, analyzer);
-
-
+           // q = new MultiFieldQueryParser(listField, analyzer).parse(listPath,listField,flags, analyzer);
+            q = new QueryParser("MNCP_NAME", analyzer).parse(QueryParser.escape(cityparam));
 
         } catch (org.apache.lucene.queryparser.classic.ParseException e) {
             e.printStackTrace();
@@ -365,7 +382,8 @@ public class SearchIndex {
 //    	}
 //    	System.out.println(tt);
 
-        generateDonutJSON(args[0], args[1]);
+        generateDonutJSON(args[0]);
+        //generateDonutJSON(args[0], args[1]);
     	//System.out.println(getNbPatients(args[0],args[1], "1", "20", "25"));
     }
 
