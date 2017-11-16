@@ -53,7 +53,7 @@ public class SearchIndex {
         JSONObject graphicJSON = new JSONObject();
         graphicJSON.put("medicalCityName",cityparam);
         for(Map.Entry<String, Integer> entry : map.entrySet()){
-        	JSONObject jsonObject = new JSONObject();
+            JSONObject jsonObject = new JSONObject();
             jsonObject.put("date", entry.getKey());
             jsonObject.put("nb", entry.getValue());
             graphicJSON.accumulate("patient", jsonObject);
@@ -228,10 +228,13 @@ public class SearchIndex {
     public static void main(String[] args) throws Exception {
         System.out.println("Génération des fichiers JSON..");
         String cwd = System.getProperty("user.dir");
-        System.out.println(cwd);
-        generateGraphicJSON(cwd);
-        generateDonutJSON(cwd);
-        generateMapJSON(cwd);
+        JSONObject j = generateGraphicJSON(cwd+"/.MED","LUXEMBOURG");
+        System.out.println(j.toString(4));
+        JSONObject j2 = generateDonutJSON(cwd+"/.MNCP", "LUXEMBOURG");
+        System.out.println(j2.toString(4));
+       // generateGraphicJSON(cwd);
+//        generateDonutJSON(cwd);
+//        generateMapJSON(cwd);
         System.out.println("..Fichiers JSON générés.");
     }
 
