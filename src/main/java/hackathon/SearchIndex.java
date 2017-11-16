@@ -22,6 +22,45 @@ import org.apache.lucene.store.FSDirectory;
 import org.json.*;
 
 public class SearchIndex {
+	
+	public static void generateMapJSON(String path, String cityparam) throws IOException{
+        ArrayList<ArrayList<String>> res = SearchIndex(path, cityparam);
+        HashMap<String[], Integer> map = new HashMap<>();
+        for(ArrayList<String> line : res){
+            Integer count = map.get(line.get(1));
+            if (count == null) {
+            	String [] tab = {line.get(1), line.get(6)};
+                map.put(tab, 1);
+            }
+            else {
+            	String [] tab = {line.get(1), line.get(6)};
+                map.put(tab, count + 1);
+            }
+        }
+        JSONObject mncp_medJSON = new JSONObject();
+        mncp_medJSON.put("patientCityName",cityparam);
+        for(Map.Entry<String[], Integer> entry : map.entrySet()){
+            JSONObject jsonObject = new JSONObject();
+            //System.out.println("age"+ entry.getKey()[0]);
+            //System.out.println("sex"+ entry.getKey()[1]);
+            jsonObject.put("age", entry.getKey()[1]);
+            jsonObject.put("sex", entry.getKey()[0]);
+            jsonObject.put("nb", entry.getValue());
+            mncp_medJSON.accumulate("medicalCity", jsonObject);
+        }
+
+        File f = new File("mapJSON_"+cityparam+".json");
+        if(f.exists())
+            f.delete();
+
+        FileWriter jsonOutput = new FileWriter(f);
+
+        jsonOutput.write(mncp_medJSON.toString(4));
+
+        jsonOutput.close();
+//        System.out.println(mncp_medJSON.toString(2));
+    }
+
 
 
     public static void generateDonutJSON(String path)throws IOException{
