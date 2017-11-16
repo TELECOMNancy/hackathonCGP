@@ -27,7 +27,8 @@ public class SearchIndex {
         ArrayList<ArrayList<String>> res = SearchIndex(path, cityparam);
         HashMap<String[], Integer> map = new HashMap<>();
         for(ArrayList<String> line : res){
-            Integer count = map.get(line.get(1));
+        	String [] temp = {line.get(1), line.get(6)};
+            Integer count = map.get(temp);
             if (count == null) {
             	String [] tab = {line.get(1), line.get(6)};
                 map.put(tab, 1);
@@ -168,6 +169,7 @@ public class SearchIndex {
         String city_doctor = "";
         String pays_doctor = "";
         String dossier = null;
+        String age = "";
         //q est la recherche
         Query q = null;
         try {
@@ -203,6 +205,7 @@ public class SearchIndex {
             city_doctor = d.get("VILLE_MEDECIN");
             pays_doctor = d.get("PAYS_MEDECIN");
             dossier = d.get("DATE_DOSSIER");
+            age = d.get("PRSN_AGE");
             /*
             System.out.println("id = " + id);
             System.out.println("sex = " + sex);
@@ -217,6 +220,7 @@ public class SearchIndex {
             res.add(dossier);
             res.add(city_doctor);
             res.add(pays_doctor);
+            res.add(age);
 
             //System.out.println("res = " + res);
             res2.add(i, res);
@@ -421,9 +425,10 @@ public class SearchIndex {
 //    	}
 //    	System.out.println(tt);
 
-        generateDonutJSON(args[0]);
+        //generateDonutJSON(args[0]);
         //generateDonutJSON(args[0], args[1]);
     	//System.out.println(getNbPatients(args[0],args[1], "1", "20", "25"));
+    	generateMapJSON(args[0], args[1]);
     }
 
 }
