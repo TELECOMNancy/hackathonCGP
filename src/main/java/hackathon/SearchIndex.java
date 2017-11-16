@@ -1,23 +1,19 @@
 package hackathon;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import javafx.beans.binding.IntegerBinding;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TopScoreDocCollector;
-import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
@@ -26,21 +22,18 @@ import org.json.*;
 public class SearchIndex {
 	
 	public static void generateGraphicJSON(String path)throws IOException{
-        FileReader f = new FileReader(path+"//ville_luxembourg.txt");
+        FileReader f = new FileReader(path+"/ville_luxembourg.txt");
         BufferedReader bf = new BufferedReader(f);
         JSONObject jsonObject = new JSONObject();
         String city;
         while((city=bf.readLine())!=null){
-            jsonObject.accumulate("medicalCity", generateGraphicJSON(path+"//MED",city));
+            jsonObject.accumulate("medicalCity", generateGraphicJSON(path+"/.MED",city));
         }
         File jf = new File("graphicJSON.json");
         if(jf.exists())
             jf.delete();
-
         FileWriter jsonOutput = new FileWriter(jf);
-
         jsonOutput.write(jsonObject.toString(4));
-
         jsonOutput.close();
     }
 
@@ -57,22 +50,20 @@ public class SearchIndex {
                 map.put(line.get(3), count + 1);
             }
         }
-        JSONObject mncp_medJSON = new JSONObject();
-        mncp_medJSON.put("medicalCityName",cityparam);
+        JSONObject graphicJSON = new JSONObject();
+        graphicJSON.put("medicalCityName",cityparam);
         for(Map.Entry<String, Integer> entry : map.entrySet()){
         	JSONObject jsonObject = new JSONObject();
             jsonObject.put("date", entry.getKey());
             jsonObject.put("nb", entry.getValue());
-            mncp_medJSON.accumulate("patient", jsonObject);
+            graphicJSON.accumulate("patient", jsonObject);
         }
-            
-
-        return mncp_medJSON;
+        return graphicJSON;
     }
 
 
     public static void generateMapJSON(String path)throws IOException{
-        FileReader f = new FileReader(path+"//ville_luxembourg.txt");
+        FileReader f = new FileReader(path+"/ville_luxembourg.txt");
         BufferedReader bf = new BufferedReader(f);
         JSONObject jsonObject = new JSONObject();
         String city;
@@ -81,29 +72,15 @@ public class SearchIndex {
         while((city=bf.readLine())!=null){
             cityName.add(city);
         }
-        System.out.println(cityName.size());
         for(String s : cityName){
-            jsonObject.accumulate("patientCity", generateMapJSON(path+"//MNCP",s));
+            jsonObject.accumulate("patientCity", generateMapJSON(path+"/.MNCP",s));
         }
         File jf = new File("mapJSON.json");
         if(jf.exists())
             jf.delete();
-
         FileWriter jsonOutput = new FileWriter(jf);
-
         jsonOutput.write(jsonObject.toString(4));
-
         jsonOutput.close();
-//        if(!hasCreatedJSON){
-//            indexNb++;
-//            File jf = new File("mapJSON"+indexNb+".json");
-//            if(jf.exists())
-//                jf.delete();
-//            FileWriter jsonOutput = new FileWriter(jf);
-//            jsonOutput.write(jsonObject.toString(4));
-//            jsonOutput.close();
-//        }
-
     }
 
 	public static JSONObject generateMapJSON(String path, String cityparam) throws IOException{
@@ -139,12 +116,12 @@ public class SearchIndex {
 
 
     public static void generateDonutJSON(String path)throws IOException{
-        FileReader f = new FileReader(path+"//ville_luxembourg.txt");
+        FileReader f = new FileReader(path+"/ville_luxembourg.txt");
         BufferedReader bf = new BufferedReader(f);
         JSONObject jsonObject = new JSONObject();
         String city;
         while((city=bf.readLine())!=null){
-            jsonObject.accumulate("patientCity", generateDonutJSON(path+"//MNCP",city));
+            jsonObject.accumulate("patientCity", generateDonutJSON(path+"/.MNCP",city));
         }
         File jf = new File("donutJSON.json");
         if(jf.exists())
@@ -178,7 +155,6 @@ public class SearchIndex {
         for(Map.Entry<String, Integer> entry : map.entrySet()){
             pctEntry=(float)entry.getValue()/(float)nbConsultations;
             if(pctEntry>0.01f) {
-                //System.out.println(pctEntry);
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("medicalCityName", entry.getKey());
                 jsonObject.put("nb", entry.getValue());
@@ -195,15 +171,9 @@ public class SearchIndex {
         return mncp_medJSON;
     }
 
-
-
-	
-    
     public static ArrayList<ArrayList<String>> SearchIndex(String path, String cityparam, String field ) throws IOException {
-        //System.out.println("Path = " + path);
         StandardAnalyzer analyzer = new StandardAnalyzer();
         Directory index = FSDirectory.open(Paths.get(path));
-        //System.out.println("length = " + index.listAll().toString().length());
         ArrayList<ArrayList<String>> res2 = new ArrayList<ArrayList<String>>();
 
         String id = "";
@@ -229,7 +199,6 @@ public class SearchIndex {
         searcher.search(q, collector);
         ScoreDoc[] hits = collector.topDocs().scoreDocs;
         // =============== Display  =============================
-        //System.out.println("Found " + hits.length + " hits.");
         for (int i = 0; i < hits.length; ++i) {
             ArrayList<String> res = new ArrayList<String>();
             int docId = hits[i].doc;
@@ -249,18 +218,21 @@ public class SearchIndex {
             res.add(city_doctor);
             res.add(pays_doctor);
             res.add(age);
-
             res2.add(i, res);
         }
-
         reader.close();
-
         return res2;
     }
 
    
     public static void main(String[] args) throws Exception {
-        generateGraphicJSON(args[0]);
+        System.out.println("Génération des fichiers JSON..");
+        String cwd = System.getProperty("user.dir");
+        System.out.println(cwd);
+        generateGraphicJSON(cwd);
+        generateDonutJSON(cwd);
+        generateMapJSON(cwd);
+        System.out.println("..Fichiers JSON générés.");
     }
 
 }

@@ -5,7 +5,6 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -46,25 +45,24 @@ public class LuceneIndex {
                 + " [-index INDEX_PATH] [-docs DOCS_PATH] [-update]\n\n"
                 + "This indexes the documents in DOCS_PATH, creating a Lucene index"
                 + "in INDEX_PATH that can be searched with SearchFiles";
-        
-        
-        String indexPathMNCP = args[0];
-        String indexPathMED = args[1];
-        String docsPath = args[2];
-        String pathFile = args[3];
-        
-        listCities(docsPath, pathFile);
-         
+
+        String cwd = System.getProperty("user.dir");
+        String indexPathMNCP = cwd+"/.MNCP";
+        String indexPathMED = cwd+"/.MED";
+        String docsPath = cwd;
+
         if (docsPath == null) {
             System.err.println("Usage: " + usage);
             System.exit(1);
         }
 
-        final Path docDir = Paths.get(docsPath);
-        if (!Files.isReadable(docDir)) {
-            System.out.println("Document directory '" + docDir.toAbsolutePath() + "' does not exist or is not readable, please check the path");
-            System.exit(1);
-        }
+        //final Path docDir = Paths.get(docsPath);
+        String[] filesName = (new File(cwd)).list();
+        //Path[] docDir;
+//        if (!Files.isReadable(docDir)) {
+//            System.out.println("Document directory '" + docDir.toAbsolutePath() + "' does not exist or is not readable, please check the path");
+//            System.exit(1);
+//        }
 
         Date start = new Date();
         try {
@@ -85,8 +83,12 @@ public class LuceneIndex {
 
             IndexWriter writerMNCP = new IndexWriter(dirMNCP, iwcMNCP);
             IndexWriter writerMED= new IndexWriter(dirMED, iwcMED);
-            indexDocsByMNCP(writerMNCP, docDir);
-            indexDocsByMED(writerMED, docDir);
+            for(String fileName : filesName)
+                if(fileName.endsWith(".csv")){
+                    indexDocsByMNCP(writerMNCP, Paths.get(fileName));
+                    indexDocsByMED(writerMED, Paths.get(fileName));
+                }
+
             
             writerMNCP.close();
             writerMED.close();
