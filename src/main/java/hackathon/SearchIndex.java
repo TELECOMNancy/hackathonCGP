@@ -23,40 +23,52 @@ import org.apache.lucene.store.FSDirectory;
 import org.json.*;
 
 public class SearchIndex {
+	
+	public static void generateGraphicJSON(String path)throws IOException{
+        FileReader f = new FileReader(path+"//villes.txt");
+        BufferedReader bf = new BufferedReader(f);
+        JSONObject jsonObject = new JSONObject();
+        String city;
+        while((city=bf.readLine())!=null){
+            jsonObject.accumulate("patientCity", generateGraphicJSON(path+"//MED",city));
+        }
+        File jf = new File("graphicJSON.json");
+        if(jf.exists())
+            jf.delete();
+
+        FileWriter jsonOutput = new FileWriter(jf);
+
+        jsonOutput.write(jsonObject.toString(4));
+
+        jsonOutput.close();
+    }
+
 
 	public static JSONObject generateGraphicJSON(String path, String cityparam) throws IOException{
-        ArrayList<ArrayList<String>> res = SearchIndex(path, cityparam);
+        ArrayList<ArrayList<String>> res = SearchIndex(path, cityparam, "VILLE_MEDECIN");
         HashMap<String, Integer> map = new HashMap<>();
         int nbConsultations = 0,
             nbConsultationsIgn =0;
-        float pctEntry = 0;
         for(ArrayList<String> line : res){
             nbConsultations++;
-            Integer count = map.get(line.get(4));
+            Integer count = map.get(line.get(3));
+            System.out.println("count =" + count);
             if (count == null) {
-                map.put(line.get(4), 1);
+                map.put(line.get(3), 1);
             }
             else {
-                map.put(line.get(4), count + 1);
+                map.put(line.get(3), count + 1);
             }
         }
         JSONObject mncp_medJSON = new JSONObject();
-        mncp_medJSON.put("patientCityName",cityparam);
+        mncp_medJSON.put("medicalCityName",cityparam);
         for(Map.Entry<String, Integer> entry : map.entrySet()){
-            pctEntry=(float)entry.getValue()/(float)nbConsultations;
-            if(pctEntry>0.01f) {
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("medicalCityName", entry.getKey());
-                jsonObject.put("nb", entry.getValue());
-                mncp_medJSON.accumulate("medicalCity", jsonObject);
-            }
-            else nbConsultationsIgn+=entry.getValue();
+        	JSONObject jsonObject = new JSONObject();
+            jsonObject.put("date", entry.getKey());
+            jsonObject.put("nb", entry.getValue());
+            mncp_medJSON.accumulate("patient", jsonObject);
         }
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("medicalCityName", "Autres");
-        jsonObject.put("nb", nbConsultationsIgn);
-        mncp_medJSON.accumulate("medicalCity", jsonObject);
-
+            
 
         return mncp_medJSON;
     }
@@ -82,7 +94,7 @@ public class SearchIndex {
     }
 
 	public static JSONObject generateMapJSON(String path, String cityparam) throws IOException{
-        ArrayList<ArrayList<String>> res = SearchIndex(path, cityparam);
+        ArrayList<ArrayList<String>> res = SearchIndex(path, cityparam, "MNCP_NAME");
         HashMap<ArrayList<String>, Integer> map = new HashMap<>();
         for(ArrayList<String> line : res){
         	ArrayList<String> temp = new ArrayList<>();
@@ -130,7 +142,7 @@ public class SearchIndex {
     }
 
     public static JSONObject generateDonutJSON(String path, String cityparam) throws IOException{
-        ArrayList<ArrayList<String>> res = SearchIndex(path, cityparam);
+        ArrayList<ArrayList<String>> res = SearchIndex(path, cityparam, "MNCP_NAME");
         HashMap<String, Integer> map = new HashMap<>();
         int nbConsultations = 0,
             nbConsultationsIgn =0;
@@ -171,7 +183,7 @@ public class SearchIndex {
 
 	
     
-    public static ArrayList<ArrayList<String>> SearchIndex(String path, String cityparam ) throws IOException {
+    public static ArrayList<ArrayList<String>> SearchIndex(String path, String cityparam, String field ) throws IOException {
         //System.out.println("Path = " + path);
         StandardAnalyzer analyzer = new StandardAnalyzer();
         Directory index = FSDirectory.open(Paths.get(path));
@@ -188,11 +200,7 @@ public class SearchIndex {
         //q est la recherche
         Query q = null;
         try {
-            String[] listField = {"MNCP_NAME"};
-            String[] listPath = {cityparam};
-            BooleanClause.Occur[] flags = {BooleanClause.Occur.MUST};
-           // q = new MultiFieldQueryParser(listField, analyzer).parse(listPath,listField,flags, analyzer);
-            q = new QueryParser("MNCP_NAME", analyzer).parse(QueryParser.escape(cityparam));
+            q = new QueryParser(field, analyzer).parse(QueryParser.escape(cityparam));
 
         } catch (org.apache.lucene.queryparser.classic.ParseException e) {
             e.printStackTrace();
@@ -200,11 +208,8 @@ public class SearchIndex {
         int hitsPerPage = 1000000;
         IndexReader reader = DirectoryReader.open(index);
 
-//System.out.println("reader =" + reader.numDocs());
         IndexSearcher searcher = new IndexSearcher(reader);
-        //System.out.println("searcher =" + searcher.count(q));
         TopScoreDocCollector collector = TopScoreDocCollector.create(hitsPerPage);
-        //System.out.println("collector = " + collector.toString());
         searcher.search(q, collector);
         ScoreDoc[] hits = collector.topDocs().scoreDocs;
         // =============== Display  =============================
@@ -213,7 +218,6 @@ public class SearchIndex {
             ArrayList<String> res = new ArrayList<String>();
             int docId = hits[i].doc;
             Document d = searcher.doc(docId);
-            //System.out.println("document = " + d.getFields());
             id = d.get("PRSN_INTERNALID");
             sex = d.get("PRSN_SEX");
             date_birth = d.get("PRSN_BIRTHDATE");
@@ -221,14 +225,7 @@ public class SearchIndex {
             pays_doctor = d.get("PAYS_MEDECIN");
             dossier = d.get("DATE_DOSSIER");
             age = d.get("PRSN_AGE");
-            /*
-            System.out.println("id = " + id);
-            System.out.println("sex = " + sex);
-            System.out.println("date_birth = " + date_birth);
-            System.out.println("ville_doctor = " + ville_doctor);
-            System.out.println("pays_doctor = " + pays_doctor);
-            System.out.println("dossier = "+ dossier);
-            */
+
             res.add(id);
             res.add(sex);
             res.add(date_birth);
@@ -237,13 +234,10 @@ public class SearchIndex {
             res.add(pays_doctor);
             res.add(age);
 
-            //System.out.println("res = " + res);
             res2.add(i, res);
         }
 
         reader.close();
-
-
 
         return res2;
     }
@@ -254,7 +248,8 @@ public class SearchIndex {
         //generateDonutJSON(args[0]);
         //generateDonutJSON(args[0], args[1]);
     	//System.out.println(getNbPatients(args[0],args[1], "1", "20", "25"));
-    	generateMapJSON(args[0]);
+    	//generateMapJSON(args[0]);
+    	generateGraphicJSON(args[0]);
     }
 
 }
