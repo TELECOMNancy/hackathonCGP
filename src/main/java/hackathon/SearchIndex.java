@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import javafx.beans.binding.IntegerBinding;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
@@ -78,12 +79,37 @@ public class SearchIndex {
 
 
     public static void generateMapJSON(String path)throws IOException{
-        FileReader f = new FileReader(path+"//villes.txt");
+        FileReader f = new FileReader(path+"//ville_luxembourg.txt");
         BufferedReader bf = new BufferedReader(f);
         JSONObject jsonObject = new JSONObject();
         String city;
+//        int cpt=0,
+//            indexNb=0;
+//        boolean hasCreatedJSON = false;
+        ArrayList<String> cityName = new ArrayList<>();
+
         while((city=bf.readLine())!=null){
-            jsonObject.accumulate("patientCity", generateMapJSON(path+"//MNCP",city));
+            cityName.add(city);
+        }
+        System.out.println(cityName.size());
+        for(String s : cityName){
+            //hasCreatedJSON = false;
+            //cpt++;
+            jsonObject.accumulate("patientCity", generateMapJSON(path+"//MNCP",s));
+//            if(cpt%(cityName.size()/3)==0){
+//                indexNb++;
+//                File jf = new File("mapJSON"+indexNb+".json");
+//                if(jf.exists())
+//                    jf.delete();
+//
+//                FileWriter jsonOutput = new FileWriter(jf);
+//
+//                jsonOutput.write(jsonObject.toString(4));
+//
+//                jsonOutput.close();
+//                hasCreatedJSON = true;
+//                jsonObject = new JSONObject();
+//            }
         }
         File jf = new File("mapJSON.json");
         if(jf.exists())
@@ -94,6 +120,16 @@ public class SearchIndex {
         jsonOutput.write(jsonObject.toString(4));
 
         jsonOutput.close();
+//        if(!hasCreatedJSON){
+//            indexNb++;
+//            File jf = new File("mapJSON"+indexNb+".json");
+//            if(jf.exists())
+//                jf.delete();
+//            FileWriter jsonOutput = new FileWriter(jf);
+//            jsonOutput.write(jsonObject.toString(4));
+//            jsonOutput.close();
+//        }
+
     }
 
 	public static JSONObject generateMapJSON(String path, String cityparam) throws IOException{
@@ -103,6 +139,42 @@ public class SearchIndex {
         	ArrayList<String> temp = new ArrayList<>();
             temp.add(line.get(1));
             temp.add(line.get(6));
+//            int age = Integer.parseInt(line.get(6));
+//            if(age <=5)
+//                temp.add("5");
+//            else if(age > 5 && age <=10)
+//                temp.add("10");
+//            else if(age > 10 && age <=15)
+//                temp.add("15");
+//            else if(age > 15 && age <=20)
+//                temp.add("20");
+//            else if(age > 20 && age <=25)
+//                temp.add("25");
+//            else if(age > 25 && age <=30)
+//                temp.add("30");
+//            else if(age > 30 && age <=35)
+//                temp.add("35");
+//            else if(age > 35 && age <=40)
+//                temp.add("40");
+//            else if(age > 40 && age <=45)
+//                temp.add("45");
+//            else if(age > 45 && age <=50)
+//                temp.add("50");
+//            else if(age > 50 && age <=55)
+//                temp.add("55");
+//            else if(age > 55 && age <=60)
+//                temp.add("60");
+//            else if(age > 60 && age <=65)
+//                temp.add("65");
+//            else if(age > 65 && age <=70)
+//                temp.add("70");
+//            else if(age > 70 && age <=75)
+//                temp.add("75");
+//            else if(age > 75 && age <=80)
+//                temp.add("80");
+//            else if(age > 80)
+//                temp.add("80+");
+
             Integer count = map.get(temp);
             if (count == null) {
                 map.put(temp, 1);
@@ -116,9 +188,12 @@ public class SearchIndex {
         for(Map.Entry<ArrayList<String>, Integer> entry : map.entrySet()){
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("age", entry.getKey().get(1));
-            jsonObject.put("sex", entry.getKey().get(0));
+            if(entry.getKey().get(0).equals("1"))
+                jsonObject.put("sex", "M");
+            if(entry.getKey().get(0).equals("2"))
+                jsonObject.put("sex", "F");
             jsonObject.put("nb", entry.getValue());
-            mapJSON.accumulate("medicalCity", jsonObject);
+            mapJSON.accumulate("patientInfo", jsonObject);
         }
         return mapJSON;
     }
@@ -126,7 +201,7 @@ public class SearchIndex {
 
 
     public static void generateDonutJSON(String path)throws IOException{
-        FileReader f = new FileReader(path+"//villes.txt");
+        FileReader f = new FileReader(path+"//ville_luxembourg.txt");
         BufferedReader bf = new BufferedReader(f);
         JSONObject jsonObject = new JSONObject();
         String city;
@@ -251,8 +326,18 @@ public class SearchIndex {
         //generateDonutJSON(args[0]);
         //generateDonutJSON(args[0], args[1]);
     	//System.out.println(getNbPatients(args[0],args[1], "1", "20", "25"));
-    	//generateMapJSON(args[0]);
-    	generateGraphicJSON(args[0]);
+    	generateMapJSON(args[0]);
+//        JSONObject jsonObject = generateMapJSON(args[0]+"//MNCP", "LUXEMBOURG");
+//        File jf = new File("mapJSON.json");
+//        if(jf.exists())
+//            jf.delete();
+//
+//        FileWriter jsonOutput = new FileWriter(jf);
+//
+//        jsonOutput.write(jsonObject.toString(4));
+//
+//        jsonOutput.close();
+    	//generateGraphicJSON(args[0]);
     }
 
 }
