@@ -174,7 +174,7 @@ public class LuceneIndex {
                     String PAYS_MEDECIN = tmp[7];
                     String PRSN_BIRTHDATE = tmp[1];
                     String DATE_DOSSIER = tmp[5];
-                    String PRSN_AGE = String.valueOf(Integer.parseInt(tmp[1].substring(0, 4))-Integer.parseInt(tmp[5].substring(0, 4)));
+                    String PRSN_AGE = String.valueOf(Integer.parseInt(tmp[5].substring(0, 4))-Integer.parseInt(tmp[1].substring(0, 4)));
                     
                     //System.out.println("tmp = " + tmp[5]);
                     doc.add(new TextField("MNCP_NAME", MNCP_NAME, Store.YES));
