@@ -25,12 +25,12 @@ import org.json.*;
 public class SearchIndex {
 	
 	public static void generateGraphicJSON(String path)throws IOException{
-        FileReader f = new FileReader(path+"//villes.txt");
+        FileReader f = new FileReader(path+"//villes_luxembourg.txt");
         BufferedReader bf = new BufferedReader(f);
         JSONObject jsonObject = new JSONObject();
         String city;
         while((city=bf.readLine())!=null){
-            jsonObject.accumulate("patientCity", generateGraphicJSON(path+"//MED",city));
+            jsonObject.accumulate("medicalCity", generateGraphicJSON(path+"//MED",city));
         }
         File jf = new File("graphicJSON.json");
         if(jf.exists())
@@ -51,8 +51,10 @@ public class SearchIndex {
             nbConsultationsIgn =0;
         for(ArrayList<String> line : res){
             nbConsultations++;
+            //System.out.println("date = "+ line.get(3));
+            //line.get(3) = line.get(3).substring(0,7);
             Integer count = map.get(line.get(3));
-            System.out.println("count =" + count);
+            //System.out.println("count =" + count);
             if (count == null) {
                 map.put(line.get(3), 1);
             }
@@ -64,7 +66,8 @@ public class SearchIndex {
         mncp_medJSON.put("medicalCityName",cityparam);
         for(Map.Entry<String, Integer> entry : map.entrySet()){
         	JSONObject jsonObject = new JSONObject();
-            jsonObject.put("date", entry.getKey());
+        	//System.out.println("date = " + entry.getKey().substring(0, 7));
+            jsonObject.put("date", entry.getKey().substring(6));
             jsonObject.put("nb", entry.getValue());
             mncp_medJSON.accumulate("patient", jsonObject);
         }
@@ -229,7 +232,7 @@ public class SearchIndex {
             res.add(id);
             res.add(sex);
             res.add(date_birth);
-            res.add(dossier);
+            res.add(dossier.substring(0,7));
             res.add(city_doctor);
             res.add(pays_doctor);
             res.add(age);
