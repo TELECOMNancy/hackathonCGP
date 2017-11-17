@@ -19,8 +19,11 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.json.*;
 
+import javax.swing.*;
+
 public class SearchIndex {
-	
+
+
 	public static void generateGraphicJSON(String path)throws IOException{
         FileReader f = new FileReader(path+"/ville_luxembourg.txt");
         BufferedReader bf = new BufferedReader(f);
@@ -227,15 +230,26 @@ public class SearchIndex {
    
     public static void main(String[] args) throws Exception {
         System.out.println("Génération des fichiers JSON..");
+        JFrame frame = new JFrame();
+        frame.setVisible(true);
+        frame.setSize(300,100);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setTitle("Progress");
+        frame.setResizable(true);
+        JLabel label = new JLabel();
+        JPanel panel = new JPanel();
+        panel.add(label);
+        frame.add(panel);
+
         String cwd = System.getProperty("user.dir");
-        JSONObject j = generateGraphicJSON(cwd+"/.MED","LUXEMBOURG");
-        System.out.println(j.toString(4));
-        JSONObject j2 = generateDonutJSON(cwd+"/.MNCP", "LUXEMBOURG");
-        System.out.println(j2.toString(4));
-       // generateGraphicJSON(cwd);
-//        generateDonutJSON(cwd);
-//        generateMapJSON(cwd);
-        System.out.println("..Fichiers JSON générés.");
+        label.setText("Generating JSON files..");
+        generateGraphicJSON(cwd);
+        generateDonutJSON(cwd);
+        generateMapJSON(cwd);
+        label.setText("..JSON files generated.");
+        Thread.sleep(1000);
+        frame.setVisible(false);
+        frame.dispose();
     }
 
 }

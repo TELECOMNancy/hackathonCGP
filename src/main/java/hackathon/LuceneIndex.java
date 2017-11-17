@@ -31,6 +31,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
+import javax.swing.*;
 import java.io.FileReader;
 
 public class LuceneIndex {
@@ -40,11 +41,23 @@ public class LuceneIndex {
      * Index all text files under a directory.
      * @throws IOException 
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         String usage = "java org.apache.lucene.demo.IndexFiles"
                 + " [-index INDEX_PATH] [-docs DOCS_PATH] [-update]\n\n"
                 + "This indexes the documents in DOCS_PATH, creating a Lucene index"
                 + "in INDEX_PATH that can be searched with SearchFiles";
+
+        JFrame frame = new JFrame();
+        frame.setVisible(true);
+        frame.setSize(300,100);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setTitle("Progress");
+        frame.setResizable(true);
+        JLabel label = new JLabel();
+        JPanel panel = new JPanel();
+        panel.add(label);
+        frame.add(panel);
+        label.setText("Indexing csv files..");
 
         String cwd = System.getProperty("user.dir");
         String indexPathMNCP = cwd+"/.MNCP";
@@ -95,6 +108,12 @@ public class LuceneIndex {
 
             Date end = new Date();
             System.out.println(end.getTime() - start.getTime() + " total milliseconds");
+
+            label.setText("..indexes created.");
+
+            Thread.sleep(1000);
+            frame.setVisible(false);
+            frame.dispose();
 
         } catch (IOException e) {
             System.out.println(" caught a " + e.getClass() +
